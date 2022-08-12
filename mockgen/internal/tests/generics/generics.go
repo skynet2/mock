@@ -25,13 +25,6 @@ type Bar[T any, R any] interface {
 	Seventeen() (*Foo[other.Three, other.Four], error)
 	Eighteen() (Iface[*other.Five], error)
 	Nineteen() AliasType
-	other.Twenty[T]
-	TwentyOne[T]
-	TwentyTwo[T]
-}
-
-type TwentyOne[T any] interface {
-	TwentyOne() T
 }
 
 type Foo[T any, R any] struct{}
@@ -45,3 +38,7 @@ type StructType struct{}
 type StructType2 struct{}
 
 type AliasType Baz[other.Three]
+
+type TwentyTwo[T any] interface {
+	TwentyTwo() T
+}

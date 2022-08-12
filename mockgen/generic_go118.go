@@ -11,6 +11,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 
@@ -24,10 +25,10 @@ func getTypeSpecTypeParams(ts *ast.TypeSpec) []*ast.Field {
 	return ts.TypeParams.List
 }
 
-func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]bool) (model.Type, error) {
+func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]bool, tm *instTypeMatcher) (model.Type, error) {
 	switch v := typ.(type) {
 	case *ast.IndexExpr:
-		m, err := p.parseType(pkg, v.X, tps)
+		m, err := p.parseType(pkg, v.X, tps, tm)
 		if err != nil {
 			return nil, err
 		}
@@ -35,14 +36,14 @@ func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]b
 		if !ok {
 			return m, nil
 		}
-		t, err := p.parseType(pkg, v.Index, tps)
+		t, err := p.parseType(pkg, v.Index, tps, tm)
 		if err != nil {
 			return nil, err
 		}
 		nm.TypeParams = &model.TypeParametersType{TypeParameters: []model.Type{t}}
 		return m, nil
 	case *ast.IndexListExpr:
-		m, err := p.parseType(pkg, v.X, tps)
+		m, err := p.parseType(pkg, v.X, tps, tm)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +53,7 @@ func (p *fileParser) parseGenericType(pkg string, typ ast.Expr, tps map[string]b
 		}
 		var ts []model.Type
 		for _, expr := range v.Indices {
-			t, err := p.parseType(pkg, expr, tps)
+			t, err := p.parseType(pkg, expr, tps, tm)
 			if err != nil {
 				return nil, err
 			}
@@ -85,4 +86,36 @@ func getIdentTypeParams(decl interface{}) string {
 	}
 	sb.WriteString("]")
 	return sb.String()
+}
+
+func (p *fileParser) parseGenericField(field *ast.Field, it *namedInterface, iface *model.Interface, pkg string, tps map[string]bool) error {
+	var indices []ast.Expr
+	var typ ast.Expr
+	switch v := field.Type.(type) {
+	case *ast.IndexExpr:
+		indices = []ast.Expr{v.Index}
+		typ = v.X
+	case *ast.IndexListExpr:
+		indices = v.Indices
+		typ = v.X
+	default:
+		return fmt.Errorf("don't know how to mock method of type %T", field.Type)
+	}
+
+	nf := &ast.Field{
+		Doc:     field.Comment,
+		Names:   field.Names,
+		Type:    typ,
+		Tag:     field.Tag,
+		Comment: field.Comment,
+	}
+
+	it.instTypeParams = indices
+	it.pkg = pkg
+
+	// parse subprocess
+	if err := p.parseField(nf, it, iface, pkg, tps); err != nil {
+		return err
+	}
+	return nil
 }
