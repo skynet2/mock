@@ -691,7 +691,7 @@ func (g *generator) getArgNames(m *model.Method, in bool) []string {
 		}
 		argNames[i] = name
 	}
-	if m.Variadic != nil {
+	if m.Variadic != nil && in {
 		name := m.Variadic.Name
 		if name == "" {
 			name = fmt.Sprintf("arg%d", len(params))
