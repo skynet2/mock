@@ -11,7 +11,7 @@ jobs:
       - run: apt-get update && apt install -y curl openssl git openssh-client
       - run: GOOS=windows GOARCH=amd64 go build -buildvcs=false -ldflags "-s -w" -o mockgen.exe ./mockgen
       - run: GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags "-s -w" -o mockgen2 ./mockgen
-      - run: GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags "-s -w" -o mockgen_darwin_arm64 ./mockgen\
+      - run: GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags "-s -w" -o mockgen_darwin_arm64 ./mockgen
       - run: rm -rf mockgen && mv mockgen2 mockgen
       - name: release
         uses: actions/create-release@v1
