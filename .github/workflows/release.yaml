@@ -5,13 +5,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: golang:1.19-bullseye
+    container: golang:1.24-bullseye
     steps:
       - uses: actions/checkout@v3
       - run: apt-get update && apt install -y curl openssl git openssh-client
       - run: GOOS=windows GOARCH=amd64 go build -buildvcs=false -ldflags "-s -w" -o mockgen.exe ./mockgen
-      - run: GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags "-s -w" -o mockgen2 ./mockgen
-      - run: rm -rf mockgen && mv mockgen2 mockgen
+      - run: GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags "-s -w" -o mockgen_linux_amd64 ./mockgen
+      - run: GOOS=darwin GOARCH=arm64 go build -buildvcs=false -ldflags "-s -w" -o mockgen_darwin_arm64 ./mockgen
       - name: release
         uses: actions/create-release@v1
         id: create_release
@@ -37,6 +37,15 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: mockgen
-          asset_name: mockgen
+          asset_path: mockgen_linux_amd64
+          asset_name: mockgen_linux_amd64
+          asset_content_type: application/octet-stream
+      - name: upload mac artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: mockgen_darwin_arm64
+          asset_name: mockgen_darwin_arm64
           asset_content_type: application/octet-stream
